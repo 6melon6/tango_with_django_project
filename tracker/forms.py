@@ -7,6 +7,16 @@ from django.core.exceptions import ValidationError
 
 from .models import FoodCategory, Food, FoodRecord
 
+class FoodSelect(forms.Select):
+    def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
+        option = super().create_option(name, value, label, selected, index, subindex=subindex, attrs=attrs)
+
+        instance = getattr(value, "instance", None)
+        if instance is not None:
+            option["attrs"]["data-calories"] = instance.calories_per_100g  # ✅ 真实字段名
+            option["attrs"]["data-food-name"] = instance.food_name        # ✅ 真实字段名（可选）
+
+        return option
 
 class RegisterForm(UserCreationForm):
     email = forms.EmailField(
@@ -132,10 +142,7 @@ class FoodRecordForm(forms.ModelForm):
             'notes': '备注',
         }
         widgets = {
-            'food': forms.Select(attrs={
-                'class': 'form-control',
-                'id': 'id_food',
-            }),
+            'food': FoodSelect(attrs={'class': 'form-control'}),
             'quantity': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'placeholder': '输入数量',
