@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Categories{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="mb-0">Categories</h2>
+  <a class="btn btn-primary" href="{% url 'category_add' %}">Add Category</a>
+</div>
+
+<div class="card shadow">
+  <div class="card-body">
+    {% if categories %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th style="width: 220px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in categories %}
+            <tr>
+              <td>{{ c.category_name }}</td>
+              <td>
+                <a class="btn btn-sm btn-outline-secondary" href="{% url 'category_edit' c.id %}">Edit</a>
+                <a class="btn btn-sm btn-outline-danger" href="{% url 'category_delete' c.id %}">Delete</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="text-muted mb-0">No categories yet. Click “Add Category” to create one.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
