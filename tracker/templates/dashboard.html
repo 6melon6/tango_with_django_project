@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="card shadow">
+  <div class="card-body">
+    <h3 class="mb-2">Dashboard</h3>
+    <p class="text-muted">You are logged in ✅</p>
+
+    <div class="d-flex flex-wrap gap-2 mt-3">
+  <a class="btn btn-primary" href="{% url 'add_food' %}">Add Record</a>
+  <a class="btn btn-outline-secondary" href="{% url 'record_list' %}">View Records</a>
+  <a class="btn btn-outline-secondary" href="{% url 'food_list' %}">Food Library</a>
+  <a class="btn btn-outline-secondary" href="{% url 'category_list' %}">Categories</a>
+  <a class="btn btn-outline-danger" href="{% url 'logout' %}">Logout</a>
+</div>
+  </div>
+</div>
+{% endblock %}

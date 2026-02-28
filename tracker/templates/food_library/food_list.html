@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Food Library{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0">Food Library</h3>
+  <a class="btn btn-primary" href="{% url 'food_library_add' %}">Add Food</a>
+</div>
+
+<div class="card shadow">
+  <div class="card-body">
+    {% if foods %}
+      <div class="table-responsive">
+        <table class="table align-middle">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Category</th>
+              <th>Calories / 100g</th>
+              <th>Unit</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for f in foods %}
+              <tr>
+                <td>{{ f.food_name }}</td>
+                <td>{{ f.category.category_name  }}</td>
+                <td>{{ f.calories_per_100g }}</td>
+                <td>{{ f.unit }}</td>
+                <td class="text-end">
+                  <a class="btn btn-sm btn-outline-secondary"
+                     href="{% url 'food_library_edit' f.id %}">Edit</a>
+                  <a class="btn btn-sm btn-outline-danger"
+                     href="{% url 'food_library_delete' f.id %}">Delete</a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="text-muted mb-0">No foods yet. Click “Add Food” to create one.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

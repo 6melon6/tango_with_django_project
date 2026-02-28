@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Records{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0">Food Records</h3>
+  <a class="btn btn-success" href="{% url 'add_food' %}">+ Add</a>
+</div>
+
+<form class="row g-2 align-items-end mb-3" method="get">
+  <div class="col-auto">
+    <label class="form-label">Date</label>
+    <input class="form-control" type="date" name="date" value="{{ query_date }}">
+  </div>
+  <div class="col-auto">
+    <button class="btn btn-outline-primary" type="submit">Filter</button>
+  </div>
+</form>
+
+<div class="alert alert-info">
+  Total calories: <strong>{{ total_calories }}</strong>
+</div>
+
+{% if entries %}
+  <div class="table-responsive">
+    <table class="table table-striped align-middle">
+      <thead>
+        <tr>
+          <th>Food</th>
+          <th>Category</th>
+          <th>Meal</th>
+          <th>Quantity (g)</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in entries %}
+        <tr>
+          <td>{{ e.food.food_name }}</td>
+          <td>{{ e.food.category.category_name }}</td>
+          <td>{{ e.get_meal_type_display }}</td>
+          <td>{{ e.quantity }}</td>
+          <td class="text-end">
+            <a class="btn btn-sm btn-outline-secondary" href="{% url 'edit_food' e.id %}">Edit</a>
+            <a class="btn btn-sm btn-outline-danger" href="{% url 'delete_food' e.id %}">Delete</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="alert alert-warning">No records found for this date.</div>
+{% endif %}
+{% endblock %}
