@@ -8,7 +8,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from .forms import RegisterForm, FoodRecordForm, FoodCategoryForm, FoodForm
 from .models import FoodCategory, Food, FoodRecord
 
-
+from .models import Food
 def get_dietary_suggestions(total_calories, meal_subtotals):
     """根据摄入热量提供饮食建议"""
     suggestions = []
@@ -234,7 +234,9 @@ def add_food_view(request):
             return redirect('record_list')
     else:
         form = FoodRecordForm()
-    return render(request, 'record/add.html', {'form': form, 'today': date.today()})
+    foods = list(Food.objects.all().values("id", "calories_per_100g"))
+    return render(request, 'record/add.html', {'form': form, 'today': date.today(), 'foods': foods})
+
 
 
 @login_required
