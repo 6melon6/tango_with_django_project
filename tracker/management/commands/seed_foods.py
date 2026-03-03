@@ -9,79 +9,79 @@ class Command(BaseCommand):
     help = 'Pre-populate common foods into the database'
 
     def handle(self, *args, **options):
-        # 定义食物分类和食物数据
+        # Define food categories and food data
         categories_data = {
-            '主食': [
-                {'name': '米饭', 'calories': 130, 'unit': '克'},
-                {'name': '面条', 'calories': 110, 'unit': '克'},
-                {'name': '馒头', 'calories': 223, 'unit': '克'},
-                {'name': '面包', 'calories': 265, 'unit': '克'},
-                {'name': '饺子', 'calories': 210, 'unit': '克'},
-                {'name': '包子', 'calories': 227, 'unit': '克'},
-                {'name': '粥', 'calories': 46, 'unit': '克'},
-                {'name': '薯条', 'calories': 312, 'unit': '克'},
-                {'name': '披萨', 'calories': 266, 'unit': '克'},
+            'Staple Food': [
+                {'name': 'Rice', 'calories': 130, 'unit': 'g'},
+                {'name': 'Noodles', 'calories': 110, 'unit': 'g'},
+                {'name': 'Steamed Bun', 'calories': 223, 'unit': 'g'},
+                {'name': 'Bread', 'calories': 265, 'unit': 'g'},
+                {'name': 'Dumplings', 'calories': 210, 'unit': 'g'},
+                {'name': 'Stuffed Bun', 'calories': 227, 'unit': 'g'},
+                {'name': 'Porridge', 'calories': 46, 'unit': 'g'},
+                {'name': 'French Fries', 'calories': 312, 'unit': 'g'},
+                {'name': 'Pizza', 'calories': 266, 'unit': 'g'},
             ],
-            '肉类': [
-                {'name': '鸡腿', 'calories': 200, 'unit': '克'},
-                {'name': '鸡胸肉', 'calories': 165, 'unit': '克'},
-                {'name': '猪肉', 'calories': 242, 'unit': '克'},
-                {'name': '牛肉', 'calories': 250, 'unit': '克'},
-                {'name': '羊肉', 'calories': 294, 'unit': '克'},
-                {'name': '鸭肉', 'calories': 337, 'unit': '克'},
-                {'name': '鱼', 'calories': 136, 'unit': '克'},
-                {'name': '虾', 'calories': 85, 'unit': '克'},
-                {'name': '汉堡肉饼', 'calories': 295, 'unit': '克'},
+            'Meat': [
+                {'name': 'Chicken Leg', 'calories': 200, 'unit': 'g'},
+                {'name': 'Chicken Breast', 'calories': 165, 'unit': 'g'},
+                {'name': 'Pork', 'calories': 242, 'unit': 'g'},
+                {'name': 'Beef', 'calories': 250, 'unit': 'g'},
+                {'name': 'Mutton', 'calories': 294, 'unit': 'g'},
+                {'name': 'Duck', 'calories': 337, 'unit': 'g'},
+                {'name': 'Fish', 'calories': 136, 'unit': 'g'},
+                {'name': 'Shrimp', 'calories': 85, 'unit': 'g'},
+                {'name': 'Burger Patty', 'calories': 295, 'unit': 'g'},
             ],
-            '蔬菜': [
-                {'name': '西兰花', 'calories': 34, 'unit': '克'},
-                {'name': '胡萝卜', 'calories': 41, 'unit': '克'},
-                {'name': '西红柿', 'calories': 18, 'unit': '克'},
-                {'name': '黄瓜', 'calories': 15, 'unit': '克'},
-                {'name': '菠菜', 'calories': 23, 'unit': '克'},
-                {'name': '生菜', 'calories': 15, 'unit': '克'},
-                {'name': '青椒', 'calories': 31, 'unit': '克'},
-                {'name': '土豆', 'calories': 77, 'unit': '克'},
-                {'name': '茄子', 'calories': 25, 'unit': '克'},
+            'Vegetables': [
+                {'name': 'Broccoli', 'calories': 34, 'unit': 'g'},
+                {'name': 'Carrot', 'calories': 41, 'unit': 'g'},
+                {'name': 'Tomato', 'calories': 18, 'unit': 'g'},
+                {'name': 'Cucumber', 'calories': 15, 'unit': 'g'},
+                {'name': 'Spinach', 'calories': 23, 'unit': 'g'},
+                {'name': 'Lettuce', 'calories': 15, 'unit': 'g'},
+                {'name': 'Bell Pepper', 'calories': 31, 'unit': 'g'},
+                {'name': 'Potato', 'calories': 77, 'unit': 'g'},
+                {'name': 'Eggplant', 'calories': 25, 'unit': 'g'},
             ],
-            '水果': [
-                {'name': '苹果', 'calories': 52, 'unit': '克'},
-                {'name': '香蕉', 'calories': 89, 'unit': '克'},
-                {'name': '橙子', 'calories': 47, 'unit': '克'},
-                {'name': '葡萄', 'calories': 67, 'unit': '克'},
-                {'name': '西瓜', 'calories': 30, 'unit': '克'},
-                {'name': '草莓', 'calories': 32, 'unit': '克'},
-                {'name': '芒果', 'calories': 60, 'unit': '克'},
-                {'name': '梨', 'calories': 57, 'unit': '克'},
-                {'name': '桃子', 'calories': 39, 'unit': '克'},
+            'Fruits': [
+                {'name': 'Apple', 'calories': 52, 'unit': 'g'},
+                {'name': 'Banana', 'calories': 89, 'unit': 'g'},
+                {'name': 'Orange', 'calories': 47, 'unit': 'g'},
+                {'name': 'Grape', 'calories': 67, 'unit': 'g'},
+                {'name': 'Watermelon', 'calories': 30, 'unit': 'g'},
+                {'name': 'Strawberry', 'calories': 32, 'unit': 'g'},
+                {'name': 'Mango', 'calories': 60, 'unit': 'g'},
+                {'name': 'Pear', 'calories': 57, 'unit': 'g'},
+                {'name': 'Peach', 'calories': 39, 'unit': 'g'},
             ],
-            '奶制品': [
-                {'name': '牛奶', 'calories': 61, 'unit': '毫升'},
-                {'name': '酸奶', 'calories': 63, 'unit': '克'},
-                {'name': '奶酪', 'calories': 402, 'unit': '克'},
-                {'name': '黄油', 'calories': 717, 'unit': '克'},
-                {'name': '豆浆', 'calories': 33, 'unit': '毫升'},
+            'Dairy': [
+                {'name': 'Milk', 'calories': 61, 'unit': 'ml'},
+                {'name': 'Yogurt', 'calories': 63, 'unit': 'g'},
+                {'name': 'Cheese', 'calories': 402, 'unit': 'g'},
+                {'name': 'Butter', 'calories': 717, 'unit': 'g'},
+                {'name': 'Soy Milk', 'calories': 33, 'unit': 'ml'},
             ],
-            '零食': [
-                {'name': '薯片', 'calories': 536, 'unit': '克'},
-                {'name': '饼干', 'calories': 488, 'unit': '克'},
-                {'name': '巧克力', 'calories': 546, 'unit': '克'},
-                {'name': '坚果', 'calories': 654, 'unit': '克'},
-                {'name': '糖果', 'calories': 400, 'unit': '克'},
-                {'name': '爆米花', 'calories': 387, 'unit': '克'},
+            'Snacks': [
+                {'name': 'Potato Chips', 'calories': 536, 'unit': 'g'},
+                {'name': 'Biscuits', 'calories': 488, 'unit': 'g'},
+                {'name': 'Chocolate', 'calories': 546, 'unit': 'g'},
+                {'name': 'Nuts', 'calories': 654, 'unit': 'g'},
+                {'name': 'Candy', 'calories': 400, 'unit': 'g'},
+                {'name': 'Popcorn', 'calories': 387, 'unit': 'g'},
             ],
-            '饮料': [
-                {'name': '可乐', 'calories': 38, 'unit': '毫升'},
-                {'name': '橙汁', 'calories': 45, 'unit': '毫升'},
-                {'name': '咖啡', 'calories': 2, 'unit': '毫升'},
-                {'name': '茶', 'calories': 1, 'unit': '毫升'},
+            'Beverages': [
+                {'name': 'Cola', 'calories': 38, 'unit': 'ml'},
+                {'name': 'Orange Juice', 'calories': 45, 'unit': 'ml'},
+                {'name': 'Coffee', 'calories': 2, 'unit': 'ml'},
+                {'name': 'Tea', 'calories': 1, 'unit': 'ml'},
             ],
-            '快餐': [
-                {'name': '汉堡', 'calories': 295, 'unit': '克'},
-                {'name': '炸鸡', 'calories': 307, 'unit': '克'},
-                {'name': '热狗', 'calories': 290, 'unit': '克'},
-                {'name': '三明治', 'calories': 250, 'unit': '克'},
-                {'name': '墨西哥卷饼', 'calories': 226, 'unit': '克'},
+            'Fast Food': [
+                {'name': 'Burger', 'calories': 295, 'unit': 'g'},
+                {'name': 'Fried Chicken', 'calories': 307, 'unit': 'g'},
+                {'name': 'Hot Dog', 'calories': 290, 'unit': 'g'},
+                {'name': 'Sandwich', 'calories': 250, 'unit': 'g'},
+                {'name': 'Burrito', 'calories': 226, 'unit': 'g'},
             ],
         }
 
@@ -89,15 +89,15 @@ class Command(BaseCommand):
         created_foods = 0
 
         for category_name, foods in categories_data.items():
-            # 创建或获取分类
+            # Create or get category
             category, created = FoodCategory.objects.get_or_create(
                 category_name=category_name,
-                defaults={'description': f'{category_name}类食品'}
+                defaults={'description': f'Category for {category_name} foods'}
             )
             if created:
                 created_categories += 1
 
-            # 创建食物
+            # Create food
             for food_data in foods:
                 food, created = Food.objects.get_or_create(
                     food_name=food_data['name'],
@@ -112,6 +112,6 @@ class Command(BaseCommand):
 
         self.stdout.write(
             self.style.SUCCESS(
-                f'成功创建 {created_categories} 个分类和 {created_foods} 个食物'
+                f'Successfully created {created_categories} categories and {created_foods} foods'
             )
         )

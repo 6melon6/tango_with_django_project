@@ -1,5 +1,7 @@
 from datetime import date, datetime
-
+from django.db.models import Avg
+from datetime import timedelta
+import json
 from django.db.models import Sum, F
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout
@@ -10,29 +12,29 @@ from .models import FoodCategory, Food, FoodRecord
 
 
 def get_dietary_suggestions(total_calories, meal_subtotals):
-    """根据摄入热量提供饮食建议"""
+    """Provide dietary advice based on calorie intake"""
     suggestions = []
     if total_calories == 0:
         return suggestions
 
     if total_calories < 1200:
-        suggestions.append(("warning", "今天的摄入量偏低，建议均衡饮食。"))
+        suggestions.append(("warning", "Today's intake is relatively low; a balanced diet is recommended."))
     elif 1200 <= total_calories <= 2000:
-        suggestions.append(("success", "很好！您的摄入量在健康范围内。"))
+        suggestions.append(("success", "Great! Your intake is within a healthy range."))
     else:
-        suggestions.append(("danger", "您已超过推荐摄入量，建议选择更清淡的食物。"))
+        suggestions.append(("danger", "You have exceeded the recommended intake, it is advisable to choose lighter foods."))
 
-    meal_labels = {'breakfast': '早餐', 'lunch': '午餐', 'dinner': '晚餐', 'snack': '零食'}
+    meal_labels = {'breakfast': 'Breakfast', 'lunch': 'Lunch', 'dinner': 'Dinner', 'snack': 'snack'}
     for meal_type, subtotal in meal_subtotals.items():
         if subtotal > 800:
             label = meal_labels.get(meal_type, meal_type)
-            suggestions.append(("info", f"您的{label}摄入量较高，建议平衡各餐。"))
+            suggestions.append(("info", f"Your {label} The intake is relatively high, it is recommended to balance each meal."))
 
     return suggestions
 
 
 def register_view(request):
-    """用户注册视图"""
+    """User Registration View"""
     if request.method == 'POST':
         form = RegisterForm(request.POST)
         if form.is_valid():
@@ -45,7 +47,7 @@ def register_view(request):
 
 
 def login_view(request):
-    """用户登录视图"""
+    """User Login View"""
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():
@@ -54,72 +56,94 @@ def login_view(request):
             return redirect(next_url)
     else:
         form = AuthenticationForm()
-    # 设置中文标签后缀
+    # Set Chinese label suffix
     form.label_suffix = ''
     return render(request, 'registration/login.html', {'form': form})
 
 
 def logout_view(request):
-    """用户登出视图"""
+    """User Logout View"""
     logout(request)
     return redirect('login')
 
 
 @login_required
 def dashboard_view(request):
-    """仪表盘视图 - 显示当日饮食汇总"""
-    today = date.today()
+        """Enhanced Dashboard View with Statistics & Charts"""
 
-    # 获取记录
-    entries = FoodRecord.objects.filter(user=request.user, record_date=today).select_related('food', 'food__category')
+        user = request.user
+        today = date.today()
 
-    # 计算总热量 - 直接在 aggregate 中计算，避免 MySQL annotate 冲突
-    total_calories = entries.aggregate(
-        total=Sum(F('quantity') * F('food__calories_per_100g') / 100)
-    )['total'] or 0
+        # All user records
+        all_records = FoodRecord.objects.filter(user=user)
 
-    # 按餐次分类的小计 - 使用表达式
-    meal_subtotals = entries.values('meal_type').annotate(
-        subtotal=Sum(F('quantity') * F('food__calories_per_100g') / 100)
-    )
-    meal_data = {item['meal_type']: item['subtotal'] for item in meal_subtotals}
+        # Today's records
+        today_records = all_records.filter(record_date=today)
 
-    # 准备 Chart.js 饼图数据
-    meal_labels = {'breakfast': '早餐', 'lunch': '午餐', 'dinner': '晚餐', 'snack': '零食'}
-    chart_labels = [meal_labels.get(k, k) for k in meal_data.keys()]
-    chart_data = [round(v, 1) for v in meal_data.values()]
+        # ========= STAT CARDS DATA =========
 
-    # 按餐次分组记录（带热量注解）
-    grouped_entries = {}
-    for meal_type, label in FoodRecord.MEAL_CHOICES:
-        grouped_entries[label] = entries.filter(meal_type=meal_type).annotate(
-            calculated_total=F('quantity') * F('food__calories_per_100g') / 100
-        )
+        # Total calories today
+        total_today = today_records.aggregate(
+            total=Sum(F('quantity') * F('food__calories_per_100g') / 100)
+        )['total'] or 0
 
-    # 获取最近 5 条饮食记录（不限日期）
-    recent_records = FoodRecord.objects.filter(user=request.user).select_related('food', 'food__category').annotate(
-        calculated_total=F('quantity') * F('food__calories_per_100g') / 100
-    ).order_by('-record_date', '-id')[:5]
+        # Total records count
+        records_count = all_records.count()
 
-    # 饮食建议
-    suggestions = get_dietary_suggestions(total_calories, meal_data)
+        # Average calories per record
+        avg_calories = all_records.aggregate(
+            avg=Avg(F('quantity') * F('food__calories_per_100g') / 100)
+        )['avg'] or 0
 
-    context = {
-        'total_calories': round(total_calories, 1),
-        'meal_data': meal_data,
-        'grouped_entries': grouped_entries,
-        'suggestions': suggestions,
-        'today': today,
-        'recent_records': recent_records,
-        'chart_labels': chart_labels,
-        'chart_data': chart_data,
-    }
-    return render(request, 'dashboard.html', context)
+        # Last entry
+        last_entry = all_records.order_by('-record_date', '-id').first()
+        last_entry_time = last_entry.record_date if last_entry else None
+
+        # ========= LAST 7 DAYS TREND =========
+
+        weekly_labels = []
+        weekly_calories = []
+
+        for i in range(6, -1, -1):
+            day = today - timedelta(days=i)
+            weekly_labels.append(day.strftime('%m-%d'))
+
+            daily_total = all_records.filter(record_date=day).aggregate(
+                total=Sum(F('quantity') * F('food__calories_per_100g') / 100)
+            )['total'] or 0
+
+            weekly_calories.append(round(float(daily_total), 1))
+
+        # ========= MEAL DISTRIBUTION =========
+
+        meal_types = ['breakfast', 'lunch', 'dinner', 'snack']
+        meal_distribution = []
+
+        for meal in meal_types:
+            meal_total = all_records.filter(meal_type=meal).aggregate(
+                total=Sum(F('quantity') * F('food__calories_per_100g') / 100)
+            )['total'] or 0
+            meal_distribution.append(round(float(meal_total), 1))
+
+        context = {
+            # Stats cards
+            'total_today': round(total_today, 1),
+            'records_count': records_count,
+            'avg_calories': round(avg_calories, 1),
+            'last_entry': last_entry_time,
+
+            # Charts
+            'weekly_labels': json.dumps(weekly_labels),
+            'weekly_calories': json.dumps(weekly_calories),
+            'meal_distribution': json.dumps(meal_distribution),
+        }
+
+        return render(request, 'dashboard.html', context)
 
 
 @login_required
 def history_view(request):
-    """历史记录视图 - 支持日期查询、日期范围查询、餐次筛选"""
+    """History View - Supports Date Query, Date Range Query, and Meal Filtering"""
     today_str = date.today().strftime('%Y-%m-%d')
     entries = None
     chart_data = []
@@ -128,25 +152,25 @@ def history_view(request):
     end_date = request.GET.get('end_date', '')
     meal_type = request.GET.get('meal_type', '')
 
-    # 默认显示今天
+    # Default to show today
     if not query_date and not start_date and not end_date:
         query_date = today_str
 
-    # 基础查询
+    # Basic Query
     base_qs = FoodRecord.objects.filter(user=request.user)
 
-    # 餐次筛选
+    # Meal Selection
     if meal_type:
         base_qs = base_qs.filter(meal_type=meal_type)
 
     if query_date:
         try:
             parsed_date = datetime.strptime(query_date, '%Y-%m-%d').date()
-            # entries 使用 annotate 添加热量字段
+            # Use annotate on entries to add a calorie field
             entries = base_qs.select_related('food', 'food__category').annotate(
                 calculated_total=F('quantity') * F('food__calories_per_100g') / 100
             ).filter(record_date=parsed_date).order_by('-record_date', '-id')
-            # chart_data 使用 aggregate 直接计算
+            # chart_data calculates directly using aggregate
             chart_data = list(
                 base_qs.filter(record_date=parsed_date)
                 .values('record_date')
@@ -171,7 +195,7 @@ def history_view(request):
         except ValueError:
             entries = base_qs.none()
 
-    # 转换日期为字符串以便 JSON 序列化
+    # Convert the date to a string for JSON serialization
     for item in chart_data:
         item['record_date'] = item['record_date'].strftime('%Y-%m-%d')
 
@@ -190,23 +214,23 @@ def history_view(request):
 
 @login_required
 def record_list_view(request):
-    """记录列表视图 - 按日期显示"""
-    # 获取查询日期，默认今天
+    # Record List View - Display by Date
+    # Get the query date, default is today
     query_date = request.GET.get('date', '')
     if not query_date:
         query_date = date.today().strftime('%Y-%m-%d')
 
-    # 解析日期
+    # Parsing Date
     selected_date = None
     entries = []
     total_calories = 0
 
     try:
         selected_date = datetime.strptime(query_date, '%Y-%m-%d').date()
-        # 获取该日期的记录 - 先排序获取 entries
+        # Get the records for this date - first sort to get entries
         qs = FoodRecord.objects.filter(user=request.user, record_date=selected_date)
         entries = qs.select_related('food', 'food__category').order_by('-id')
-        # 单独计算总热量（避免 MySQL annotate/aggregate 冲突）
+        # Calculate the total calories separately (to avoid MySQL annotate/aggregate conflicts)
         total_calories = qs.aggregate(
             total=Sum(F('quantity') * F('food__calories_per_100g') / 100)
         )['total'] or 0
@@ -224,7 +248,7 @@ def record_list_view(request):
 
 @login_required
 def add_food_view(request):
-    """添加饮食记录视图"""
+    """Add Diet Record View"""
     if request.method == 'POST':
         form = FoodRecordForm(request.POST)
         if form.is_valid():
@@ -239,7 +263,7 @@ def add_food_view(request):
 
 @login_required
 def edit_food_view(request, id):
-    """编辑饮食记录视图"""
+    """Edit Diet Record View"""
     record = get_object_or_404(FoodRecord, id=id, user=request.user)
     if request.method == 'POST':
         form = FoodRecordForm(request.POST, instance=record)
@@ -253,7 +277,7 @@ def edit_food_view(request, id):
 
 @login_required
 def delete_food_view(request, id):
-    """删除饮食记录视图"""
+    """Delete Diet Record View"""
     record = get_object_or_404(FoodRecord, id=id, user=request.user)
     if request.method == 'POST':
         record.delete()
@@ -261,18 +285,18 @@ def delete_food_view(request, id):
     return render(request, 'record/delete.html', {'entry': record})
 
 
-# ========== 食物分类管理视图 ==========
+# ========== Food Classification Management View ==========
 
 @login_required
 def category_list_view(request):
-    """分类列表视图"""
+    # Category List View
     categories = FoodCategory.objects.all().order_by('category_name')
     return render(request, 'category/category_list.html', {'categories': categories})
 
 
 @login_required
 def category_add_view(request):
-    """添加分类视图"""
+    # Add category view
     if request.method == 'POST':
         form = FoodCategoryForm(request.POST)
         if form.is_valid():
@@ -280,12 +304,12 @@ def category_add_view(request):
             return redirect('category_list')
     else:
         form = FoodCategoryForm()
-    return render(request, 'category/category_form.html', {'form': form, 'action': '添加'})
+    return render(request, 'category/category_form.html', {'form': form, 'action': 'Add'})
 
 
 @login_required
 def category_edit_view(request, id):
-    """编辑分类视图"""
+    # Edit Category View
     category = get_object_or_404(FoodCategory, id=id)
     if request.method == 'POST':
         form = FoodCategoryForm(request.POST, instance=category)
@@ -294,12 +318,12 @@ def category_edit_view(request, id):
             return redirect('category_list')
     else:
         form = FoodCategoryForm(instance=category)
-    return render(request, 'category/category_form.html', {'form': form, 'action': '编辑', 'category': category})
+    return render(request, 'category/category_form.html', {'form': form, 'action': 'Edit', 'category': category})
 
 
 @login_required
 def category_delete_view(request, id):
-    """删除分类视图"""
+    # Delete category view
     category = get_object_or_404(FoodCategory, id=id)
     if request.method == 'POST':
         category.delete()
@@ -307,25 +331,25 @@ def category_delete_view(request, id):
     return render(request, 'category/category_delete.html', {'category': category})
 
 
-# ========== 食物库管理视图 ==========
+# ========== Food Inventory Management View ==========
 
 @login_required
 def food_list_view(request):
-    """食物库列表视图 - 支持搜索"""
+   # Food Library List View - Supports Search
     search_query = request.GET.get('search', '')
     category_filter = request.GET.get('category', '')
 
     foods = Food.objects.all().select_related('category').order_by('category__category_name', 'food_name')
 
-    # 搜索过滤
+    # Search Filter
     if search_query:
         foods = foods.filter(food_name__icontains=search_query)
 
-    # 分类过滤
+    # Category Filtering
     if category_filter:
         foods = foods.filter(category_id=category_filter)
 
-    # 获取所有分类用于过滤下拉框
+    # Get all categories for filtering dropdown
     categories = FoodCategory.objects.all().order_by('category_name')
 
     context = {
@@ -339,7 +363,7 @@ def food_list_view(request):
 
 @login_required
 def food_library_add_view(request):
-    """添加食物到食物库视图"""
+    # Add food to the food library view
     if request.method == 'POST':
         form = FoodForm(request.POST)
         if form.is_valid():
@@ -347,12 +371,12 @@ def food_library_add_view(request):
             return redirect('food_list')
     else:
         form = FoodForm()
-    return render(request, 'food_library/food_form.html', {'form': form, 'action': '添加'})
+    return render(request, 'food_library/food_form.html', {'form': form, 'action': 'Add'})
 
 
 @login_required
 def food_library_edit_view(request, id):
-    """编辑食物库中的食物视图"""
+    # Edit the food view in the food library
     food = get_object_or_404(Food, id=id)
     if request.method == 'POST':
         form = FoodForm(request.POST, instance=food)
@@ -361,12 +385,12 @@ def food_library_edit_view(request, id):
             return redirect('food_list')
     else:
         form = FoodForm(instance=food)
-    return render(request, 'food_library/food_form.html', {'form': form, 'action': '编辑', 'food': food})
+    return render(request, 'food_library/food_form.html', {'form': form, 'action': 'action', 'food': food})
 
 
 @login_required
 def food_library_delete_view(request, id):
-    """删除食物库中的食物视图"""
+    # Delete the food view in the food library
     food = get_object_or_404(Food, id=id)
     if request.method == 'POST':
         food.delete()
