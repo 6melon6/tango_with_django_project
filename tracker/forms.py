@@ -7,14 +7,24 @@ from django.core.exceptions import ValidationError
 
 from .models import FoodCategory, Food, FoodRecord
 
+class FoodSelect(forms.Select):
+    def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
+        option = super().create_option(name, value, label, selected, index, subindex=subindex, attrs=attrs)
+
+        instance = getattr(value, "instance", None)
+        if instance is not None:
+            option["attrs"]["data-calories"] = instance.calories_per_100g
+            option["attrs"]["data-food-name"] = instance.food_name
+
+        return option
 
 class RegisterForm(UserCreationForm):
     email = forms.EmailField(
         required=True,
-        label='电子邮箱',
+        label='Email',
         widget=forms.EmailInput(attrs={
             'class': 'form-control',
-            'placeholder': '电子邮件地址',
+            'placeholder': 'Email address',
         }),
     )
 
@@ -26,69 +36,69 @@ class RegisterForm(UserCreationForm):
         super().__init__(*args, **kwargs)
         self.fields['username'].widget.attrs.update({
             'class': 'form-control',
-            'placeholder': '用户名',
+            'placeholder': 'Username',
         })
-        self.fields['username'].label = '用户名'
+        self.fields['username'].label = 'Username'
         self.fields['password1'].widget.attrs.update({
             'class': 'form-control',
-            'placeholder': '密码',
+            'placeholder': 'Password',
         })
-        self.fields['password1'].label = '密码'
+        self.fields['password1'].label = 'Password'
         self.fields['password2'].widget.attrs.update({
             'class': 'form-control',
-            'placeholder': '确认密码',
+            'placeholder': 'Confirm password',
         })
-        self.fields['password2'].label = '确认密码'
+        self.fields['password2'].label = 'Confirm password'
 
 
 class FoodCategoryForm(forms.ModelForm):
-    """食物分类表单"""
+    """Food Category Form"""
     class Meta:
         model = FoodCategory
         fields = ['category_name', 'description']
         labels = {
-            'category_name': '分类名称',
-            'description': '描述',
+            'category_name': 'Category Name',
+            'description': 'Description',
         }
         widgets = {
             'category_name': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'e.g. 主食类',
+                'placeholder': 'e.g. Main Dishes',
             }),
             'description': forms.Textarea(attrs={
                 'class': 'form-control',
-                'placeholder': '分类描述',
+                'placeholder': 'Category description',
                 'rows': 3,
             }),
         }
 
 
 class FoodForm(forms.ModelForm):
-    """食物表单"""
+    """Food Form"""
     class Meta:
         model = Food
         fields = ['food_name', 'category', 'calories_per_100g', 'unit']
         labels = {
-            'food_name': '食物名称',
-            'category': '分类',
-            'calories_per_100g': '卡路里 (每100克)',
-            'unit': '单位',
+            'food_name': 'Food Name',
+            'category': 'Category',
+            'calories_per_100g': 'Calories (per 100g)',
+            'unit': 'Unit',
         }
         widgets = {
             'food_name': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'e.g. 米饭',
+                'placeholder': 'e.g. Rice',
             }),
             'category': forms.Select(attrs={
                 'class': 'form-control',
             }),
             'calories_per_100g': forms.NumberInput(attrs={
                 'class': 'form-control',
-                'placeholder': '每100克卡路里',
+                'placeholder': 'Calories per 100g',
             }),
             'unit': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': '单位，如克',
+                'placeholder': 'Unit (e.g. g)',
             }),
         }
 
@@ -97,39 +107,39 @@ class FoodForm(forms.ModelForm):
         if food_name:
             food_name = food_name.strip()
             if len(food_name) > 100:
-                raise ValidationError('食物名称不能超过100个字符。')
+                raise ValidationError('Food name cannot exceed 100 characters.')
             if not food_name:
-                raise ValidationError('食物名称是必填项。')
+                raise ValidationError('Food name is required.')
         return food_name
 
     def clean_calories_per_100g(self):
         calories = self.cleaned_data.get('calories_per_100g')
         if calories is not None and (calories < 1 or calories > 5000):
-            raise ValidationError('每100克卡路里必须在1到5000之间。')
+            raise ValidationError('Calories per 100g must be between 1 and 5000.')
         if calories is None or calories == '':
-            raise ValidationError('卡路里是必填项。')
+            raise ValidationError('Calories are required.')
         return calories
 
     def clean_unit(self):
         unit = self.cleaned_data.get('unit')
         if not unit or not unit.strip():
-            raise ValidationError('单位是必填项。')
+            raise ValidationError('Unit is required.')
         if len(unit) > 20:
-            raise ValidationError('单位不能超过20个字符。')
+            raise ValidationError('Unit cannot exceed 20 characters.')
         return unit.strip()
 
 
 class FoodRecordForm(forms.ModelForm):
-    """饮食记录表单"""
+    """Food Record Form"""
     class Meta:
         model = FoodRecord
         fields = ['food', 'quantity', 'meal_type', 'record_date', 'notes']
         labels = {
-            'food': '选择食物',
-            'quantity': '数量 (克)',
-            'meal_type': '餐次',
-            'record_date': '记录日期',
-            'notes': '备注',
+            'food': 'Select Food',
+            'quantity': 'Quantity (g)',
+            'meal_type': 'Meal Type',
+            'record_date': 'Record Date',
+            'notes': 'Notes',
         }
         widgets = {
             'food': forms.Select(attrs={
@@ -138,7 +148,7 @@ class FoodRecordForm(forms.ModelForm):
             }),
             'quantity': forms.NumberInput(attrs={
                 'class': 'form-control',
-                'placeholder': '输入数量',
+                'placeholder': 'Enter quantity',
                 'step': '0.1',
                 'min': '0.1',
                 'id': 'id_quantity',
@@ -154,7 +164,7 @@ class FoodRecordForm(forms.ModelForm):
             }),
             'notes': forms.Textarea(attrs={
                 'class': 'form-control',
-                'placeholder': '备注（可选）',
+                'placeholder': 'Notes (optional)',
                 'rows': 2,
             }),
         }
@@ -167,34 +177,34 @@ class FoodRecordForm(forms.ModelForm):
     def clean_quantity(self):
         quantity = self.cleaned_data.get('quantity')
         if quantity is not None and quantity <= 0:
-            raise ValidationError('数量必须大于0。')
+            raise ValidationError('Quantity must be greater than 0.')
         if quantity is None or quantity == '':
-            raise ValidationError('数量是必填项。')
+            raise ValidationError('Quantity is required.')
         return quantity
 
     def clean_record_date(self):
         record_date = self.cleaned_data.get('record_date')
         if record_date and record_date > date.today():
-            raise ValidationError('日期不能是未来日期。')
+            raise ValidationError('Record date cannot be in the future.')
         if record_date is None:
-            raise ValidationError('日期是必填项。')
+            raise ValidationError('Record date is required.')
         return record_date
 
     def clean_notes(self):
         notes = self.cleaned_data.get('notes')
         if notes and len(notes) > 500:
-            raise ValidationError('备注不能超过500个字符。')
+            raise ValidationError('Notes cannot exceed 500 characters.')
         return notes
 
     def clean_meal_type(self):
         meal_type = self.cleaned_data.get('meal_type')
         valid_choices = [choice[0] for choice in FoodRecord.MEAL_CHOICES]
         if meal_type not in valid_choices:
-            raise ValidationError('请选择有效的餐次。')
+            raise ValidationError('Please select a valid meal type.')
         return meal_type
 
 
-# 保留旧的 FoodEntryForm 以兼容旧代码（如果需要）
+# Keep old FoodEntryForm for backward compatibility (if needed)
 class FoodEntryForm(FoodRecordForm):
-    """旧的饮食记录表单（兼容版本）"""
+    """Legacy Food Record Form (compatible version)"""
     pass
