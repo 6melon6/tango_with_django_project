@@ -5,10 +5,7 @@
 <div class="container py-4">
 
   <!-- Page Title -->
-  <div class="mb-4">
-    <h2 class="fw-bold">Dashboard</h2>
-    <p class="text-muted">Overview of your nutrition data</p>
-  </div>
+
 
   <!-- Stats Cards -->
   <div class="row g-4 mb-4">
@@ -91,7 +88,13 @@ const calorieData = {{ weekly_calories|safe }};
 const calorieLabels = {{ weekly_labels|safe }};
 const mealData = {{ meal_distribution|safe }};
 
-new Chart(document.getElementById('calorieChart'), {
+const trendCtx = document.getElementById('calorieChart').getContext('2d');
+
+const gradient = trendCtx.createLinearGradient(0,0,0,400);
+gradient.addColorStop(0,'rgba(134,196,142,0.45)');
+gradient.addColorStop(1,'rgba(134,196,142,0)');
+
+new Chart(trendCtx,{
     type: 'line',
     data: {
         labels: calorieLabels,
@@ -99,19 +102,35 @@ new Chart(document.getElementById('calorieChart'), {
             label: 'Calories',
             data: calorieData,
             borderWidth: 2,
-            tension: 0.3
+            backgroundColor: gradient,
+            fill: true,
+            tension: 0.35,
+            pointRadius: 3,
+            borderColor: '#7dbf85'
         }]
     }
+
 });
 
-new Chart(document.getElementById('mealChart'), {
+const mealCtx = document.getElementById('mealChart').getContext('2d');
+
+new Chart(mealCtx, {
     type: 'pie',
     data: {
         labels: ['Breakfast','Lunch','Dinner','Snack'],
         datasets: [{
-            data: mealData
+            data: mealData,
+            backgroundColor: [
+                '#9ED8A6',
+                '#F6B7C1',
+                '#F6C177',
+                '#F1E3A3'
+            ],
+            borderWidth: 2,
+            borderColor: '#ffffff'
         }]
-    }
+    },
+
 });
 </script>
 
