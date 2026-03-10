@@ -282,7 +282,7 @@ def delete_food_view(request, id):
     if request.method == 'POST':
         record.delete()
         return redirect('record_list')
-    return render(request, 'record/delete.html', {'entry': record})
+    return render(request, 'record/delete.html', {'record': record})
 
 
 # ========== Food Classification Management View ==========

@@ -7,8 +7,6 @@ from django.core.exceptions import ValidationError
 
 from .models import FoodCategory, Food, FoodRecord
 
-<<<<<<< Updated upstream
-=======
 class FoodSelect(forms.Select):
     def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
         option = super().create_option(name, value, label, selected, index, subindex=subindex, attrs=attrs)
@@ -19,7 +17,6 @@ class FoodSelect(forms.Select):
             option["attrs"]["data-food-name"] = instance.food_name
 
         return option
->>>>>>> Stashed changes
 
 class RegisterForm(UserCreationForm):
     email = forms.EmailField(
